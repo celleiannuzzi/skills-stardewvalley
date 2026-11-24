@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$TargetSave = "Dark"
 )
 
@@ -122,14 +122,18 @@ foreach ($group in ($cropsTerrain | Group-Object { $_.value.TerrainFeature.crop.
     
     if ($info.RegrowDays -gt 0 -and $isFullGrown) {
         # Planta com rebrotamento (ex: Morango, Vagem)
-        # dayOfPhase conta quantos dias desde a última colheita. Quando dayOfPhase <= 0 ou atinge RegrowDays ela fica pronta.
+        # No Stardew Valley:
+        # Quando colhida, dayOfCurrentPhase = regrowAfterHarvest (ex: 4 para morango).
+        # A cada noite regada, dayOfCurrentPhase decresce:
+        # dayOfCurrentPhase = Math.Max(0, dayOfCurrentPhase - 1)
+        # Quando atinge 0, a fruta brota novamente e fica pronta para colheita!
         $regrowTarget = $info.RegrowDays
-        if ($dayOfPhase -le 0 -or $dayOfPhase -ge $regrowTarget) {
+        if ($dayOfPhase -le 0) {
             $isReadyToHarvest = $true
             $daysRemaining = 0
         } else {
             $isReadyToHarvest = $false
-            $daysRemaining = $regrowTarget - $dayOfPhase
+            $daysRemaining = $dayOfPhase
         }
     } else {
         # Planta em ciclo inicial de crescimento
