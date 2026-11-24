@@ -34,13 +34,29 @@ $backpack = [int]$farmer.maxItems
 $money = [int64]$farmer.money
 $weather = $xml.SaveGame.isRaining
 
+$dayOfWeekIndex = ($currentDay - 1) % 7
+$dayNames = @("Segunda-feira", "Terca-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sabado", "Domingo")
+$dayOfWeek = $dayNames[$dayOfWeekIndex]
+
+# Carrinho Viajante (Sextas e Domingos: dias 5, 7, 12, 14, 19, 21, 26, 28)
+$isMerchantDay = ($dayOfWeekIndex -eq 4 -or $dayOfWeekIndex -eq 6)
+$daysUntilMerchant = if ($isMerchantDay) { 0 } elseif ($dayOfWeekIndex -lt 4) { 4 - $dayOfWeekIndex } elseif ($dayOfWeekIndex -eq 5) { 1 } else { 5 }
+$nextMerchantDay = $currentDay + $daysUntilMerchant
+
 Write-Host "==========================================================" -ForegroundColor Green
 Write-Host "     STARDEW VALLEY - STRATEGIC COMMAND & PRODUCTIVITY    " -ForegroundColor Yellow
 Write-Host "==========================================================" -ForegroundColor Green
 Write-Host "Fazendeiro(a): $($farmer.name) | Fazenda: $($farmer.farmName) Farm" -ForegroundColor Cyan
-Write-Host "Data Atual: Dia $currentDay de $season (Ano $year) | Dias p/ fim da estacao: $daysRemainingInSeason dias" -ForegroundColor Cyan
+Write-Host "Data Atual: Dia $currentDay ($dayOfWeek) de $season (Ano $year)" -ForegroundColor Cyan
 Write-Host "Clima Atual: $(if ($weather -eq 'true') { 'Chovendo' } else { 'Ensolarado' }) | Carteira: $money g" -ForegroundColor Cyan
 Write-Host "Mochila: $backpack espacos | Mina mais profunda: Andar $deepestMine" -ForegroundColor Cyan
+
+if ($isMerchantDay) {
+    Write-Host "[CARRINHO VIAJANTE] ESTA NA FLORESTA HOJE! (06h as 20h)" -ForegroundColor Magenta
+    Write-Host "   (Visite a floresta ao sul da fazenda para checar itens raros do Centro Comunitario e Semente Rara!)" -ForegroundColor Yellow
+} else {
+    Write-Host ("* Carrinho Viajante: Proxima visita em {0} dias (Dia {1} - {2})" -f $daysUntilMerchant, $nextMerchantDay, $dayNames[($nextMerchantDay - 1) % 7]) -ForegroundColor DarkCyan
+}
 
 # 1. Mapear TODOS os itens que o jogador possui (Inventário + Todos os baús do mundo)
 $allItems = @{}
