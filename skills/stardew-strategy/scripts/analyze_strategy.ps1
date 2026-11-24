@@ -179,14 +179,19 @@ if ($locCC -and $locCC.bundles -and $locCC.bundles.item) {
     # 0 = Spring Crops (0: Parsnip, 1: Green Bean, 2: Cauliflower, 3: Potato)
     if ($bundleStatusMap[0]) {
         $b = $bundleStatusMap[0]
+        $is0Complete = ($b[0..3] -notcontains $false)
         Write-Host "Pacote Lavouras da Primavera (Spring Crops):" -ForegroundColor Cyan
-        Write-Host ("  [{0}] Chirivia" -f $(if ($b[0]) { "X" } else { " " })) -ForegroundColor $(if ($b[0]) { "Green" } else { "Yellow" })
-        Write-Host ("  [{0}] Vagem (Green Bean) - FALTANDO! (Colheita prevista dia 25)" -f $(if ($b[1]) { "X" } else { " " })) -ForegroundColor $(if ($b[1]) { "Green" } else { "Magenta" })
-        Write-Host ("  [{0}] Couve-flor" -f $(if ($b[2]) { "X" } else { " " })) -ForegroundColor $(if ($b[2]) { "Green" } else { "Yellow" })
-        Write-Host ("  [{0}] Batata" -f $(if ($b[3]) { "X" } else { " " })) -ForegroundColor $(if ($b[3]) { "Green" } else { "Yellow" })
-        
-        if (-not $b[1] -and $allItems.ContainsKey("Green Bean")) {
-            $ccReadyDeliveries += "Pacote Lavouras da Primavera: Vagem x1 [Voce tem no bau!]"
+        if ($is0Complete) {
+            Write-Host "  [X] PACOTE 100% COMPLETO! (Todas as 4 lavouras entregues)" -ForegroundColor Green
+        } else {
+            Write-Host ("  [{0}] Chirivia" -f $(if ($b[0]) { "X" } else { " " })) -ForegroundColor $(if ($b[0]) { "Green" } else { "Yellow" })
+            Write-Host ("  [{0}] Vagem (Green Bean)" -f $(if ($b[1]) { "X" } else { " " })) -ForegroundColor $(if ($b[1]) { "Green" } else { "Magenta" })
+            Write-Host ("  [{0}] Couve-flor" -f $(if ($b[2]) { "X" } else { " " })) -ForegroundColor $(if ($b[2]) { "Green" } else { "Yellow" })
+            Write-Host ("  [{0}] Batata" -f $(if ($b[3]) { "X" } else { " " })) -ForegroundColor $(if ($b[3]) { "Green" } else { "Yellow" })
+            
+            if (-not $b[1] -and $allItems.ContainsKey("Green Bean")) {
+                $ccReadyDeliveries += "Pacote Lavouras da Primavera: Vagem x1 [Voce tem no bau!]"
+            }
         }
     }
     
