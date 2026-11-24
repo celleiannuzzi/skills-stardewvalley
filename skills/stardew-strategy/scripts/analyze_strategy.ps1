@@ -1,4 +1,4 @@
-﻿param(
+param(
     [string]$TargetSave = "Dark"
 )
 
@@ -90,9 +90,9 @@ foreach ($loc in $xml.SaveGame.locations.GameLocation) {
 
 # 2. MUSEU (GUNTHER) - Checagem de itens doados vs guardados
 Write-Host "`n----------------------------------------------------------" -ForegroundColor Gray
-Write-Host "1. MUSEU (GUNTHER) - DOAÇÕES PENDENTES GUARDADAS NO BAÚ" -ForegroundColor Magenta
+Write-Host "1. MUSEU (GUNTHER) - DOACOES PENDENTES GUARDADAS NO BAU" -ForegroundColor Magenta
 
-$TOTAL_MUSEUM_PIECES = 95 # 42 artefatos + 53 minerais
+$TOTAL_MUSEUM_PIECES = 95
 $archLoc = $xml.SaveGame.locations.GameLocation | Where-Object { $_.Name -eq 'ArchaeologyHouse' }
 $donatedIds = @()
 if ($archLoc -and $archLoc.museumPieces -and $archLoc.museumPieces.item) {
@@ -102,10 +102,7 @@ if ($archLoc -and $archLoc.museumPieces -and $archLoc.museumPieces.item) {
 $donatedCount = $donatedIds.Count
 Write-Host ("Progresso Total do Museu: {0}/{1} itens doados (Faltam {2})" -f $donatedCount, $TOTAL_MUSEUM_PIECES, ($TOTAL_MUSEUM_PIECES - $donatedCount))
 
-# Verificar se nos baús ou inventário existe algum mineral/artefato não doado
 $museumItemsToDonate = @()
-
-# Tabela de nomes e IDs comuns de doações
 $allMuseumDonatable = @{
     "96" = "Dwarf Scroll I"; "97" = "Dwarf Scroll II"; "98" = "Dwarf Scroll III"; "99" = "Dwarf Scroll IV"
     "100" = "Chipped Amphora"; "101" = "Arrowhead"; "102" = "Ancient Doll"; "103" = "Elvish Jewelry"
@@ -124,7 +121,6 @@ $allMuseumDonatable = @{
 
 foreach ($id in $allMuseumDonatable.Keys) {
     if (-not ($donatedIds -contains $id)) {
-        # Não foi doado ainda. Temos no baú/inventário?
         if ($allItemsById.ContainsKey($id)) {
             $nameItem = $allItemsById[$id].Name
             $qty = $allItemsById[$id].Count
@@ -138,17 +134,17 @@ foreach ($id in $allMuseumDonatable.Keys) {
 }
 
 if ($museumItemsToDonate.Count -gt 0) {
-    Write-Host "🚨 ITENS NO SEU BAÚ QUE VOCÊ NUNCA DOOU AO MUSEU (Leve para o Gunther!):" -ForegroundColor Yellow
+    Write-Host "ITENS NO SEU BAU QUE VOCE NUNCA DOOU AO MUSEU (Leve para o Gunther!):" -ForegroundColor Yellow
     foreach ($m in $museumItemsToDonate) {
         Write-Host ("  * [LEVAR AO MUSEU] {0} (voce tem {1} guardado)" -f $m.Name, $m.Qty) -ForegroundColor Green
     }
 } else {
-    Write-Host "  Nenhum mineral ou artefato pendente de doação encontrado nos seus baús no momento." -ForegroundColor DarkGray
+    Write-Host "  Nenhum mineral ou artefato pendente de doacao encontrado nos seus baus no momento." -ForegroundColor DarkGray
 }
 
-# 3. CENTRO COMUNITÁRIO - Itens prontos para entregar
+# 3. CENTRO COMUNITÁRIO - Parser exato do estado dos pacotes
 Write-Host "`n----------------------------------------------------------" -ForegroundColor Gray
-Write-Host "2. ITENS NO SEU BAÚ/INVENTÁRIO PRONTOS PARA ENTREGAR NO CENTRO COMUNITÁRIO" -ForegroundColor Magenta
+Write-Host "2. STATUS PRECISO DO CENTRO COMUNITÁRIO" -ForegroundColor Magenta
 
 $locCC = $xml.SaveGame.locations.GameLocation | Where-Object { $_.Name -eq 'CommunityCenter' }
 $ccReadyDeliveries = @()
@@ -159,60 +155,61 @@ if ($locCC -and $locCC.bundles -and $locCC.bundles.item) {
         $bundleStatusMap[[int]$b.key.int] = @($b.value.ArrayOfBoolean.boolean) | ForEach-Object { [bool]::Parse($_) }
     }
     
-    # Bundle 0: Coleta Primavera
-    if ($bundleStatusMap[0] -and -not $bundleStatusMap[0][1] -and $allItems.ContainsKey("Daffodil")) {
-        $ccReadyDeliveries += "Pacote Coleta da Primavera: Narciso (Daffodil) x1 [Voce tem $($allItems['Daffodil']) no bau! Completa o pacote!]"
-    }
-    # Bundle 6: Lavouras Primavera
-    if ($bundleStatusMap[6]) {
-        if (-not $bundleStatusMap[6][0] -and $allItems.ContainsKey("Parsnip")) {
-            $ccReadyDeliveries += "Pacote Lavouras da Primavera: Chirívia (Parsnip) x1 [Voce tem $($allItems['Parsnip']) no bau!]"
-        }
-        if (-not $bundleStatusMap[6][2] -and $allItems.ContainsKey("Cauliflower")) {
-            $ccReadyDeliveries += "Pacote Lavouras da Primavera: Couve-flor (Cauliflower) x1 [Voce tem $($allItems['Cauliflower']) no bau!]"
-        }
-        if (-not $bundleStatusMap[6][3] -and $allItems.ContainsKey("Potato")) {
-            $ccReadyDeliveries += "Pacote Lavouras da Primavera: Batata (Potato) x1 [Voce tem $($allItems['Potato']) no bau!]"
-        }
-    }
-    # Bundle 9: Qualidade (Parsnip 5 Ouro)
-    if ($bundleStatusMap[9] -and -not $bundleStatusMap[9][0]) {
-        $parsnipGold = if ($allItemsQuality.ContainsKey("Parsnip#2")) { $allItemsQuality["Parsnip#2"] } else { 0 }
-        if ($parsnipGold -ge 5) {
-            $ccReadyDeliveries += "Pacote Lavouras de Qualidade: 5 Chirivias Douradas [Voce tem $parsnipGold no bau!]"
+    # Checar áreas desbloqueadas
+    # areasComplete: 0: Crafts Room, 1: Pantry, 2: Fish Tank, 3: Boiler Room, 4: Vault, 5: Bulletin Board
+    $craftsRoomDone = $bundleStatusMap[13][0..3] -notcontains $false -and $bundleStatusMap[14][0..2] -notcontains $false -and $bundleStatusMap[15][0..3] -notcontains $false -and $bundleStatusMap[16][0..3] -notcontains $false
+    $boilerRoomUnlocked = $craftsRoomDone -or ($locCC.areasComplete -and [bool]::Parse($locCC.areasComplete.boolean[0]))
+    
+    # 0 = Spring Crops (0: Parsnip, 1: Green Bean, 2: Cauliflower, 3: Potato)
+    if ($bundleStatusMap[0]) {
+        $b = $bundleStatusMap[0]
+        Write-Host "Pacote Lavouras da Primavera (Spring Crops):" -ForegroundColor Cyan
+        Write-Host ("  [{0}] Chirivia" -f $(if ($b[0]) { "X" } else { " " })) -ForegroundColor $(if ($b[0]) { "Green" } else { "Yellow" })
+        Write-Host ("  [{0}] Vagem (Green Bean) - FALTANDO! (Colheita prevista dia 25)" -f $(if ($b[1]) { "X" } else { " " })) -ForegroundColor $(if ($b[1]) { "Green" } else { "Magenta" })
+        Write-Host ("  [{0}] Couve-flor" -f $(if ($b[2]) { "X" } else { " " })) -ForegroundColor $(if ($b[2]) { "Green" } else { "Yellow" })
+        Write-Host ("  [{0}] Batata" -f $(if ($b[3]) { "X" } else { " " })) -ForegroundColor $(if ($b[3]) { "Green" } else { "Yellow" })
+        
+        if (-not $b[1] -and $allItems.ContainsKey("Green Bean")) {
+            $ccReadyDeliveries += "Pacote Lavouras da Primavera: Vagem x1 [Voce tem no bau!]"
         }
     }
-    # Bundle 20: Ferreiro
-    if ($bundleStatusMap[20]) {
-        if (-not $bundleStatusMap[20][0] -and $allItems.ContainsKey("Copper Bar")) {
-            $ccReadyDeliveries += "Pacote Ferreiro: Barra de Cobre x1 [Voce tem $($allItems['Copper Bar']) no bau!]"
-        }
-        if (-not $bundleStatusMap[20][1] -and $allItems.ContainsKey("Iron Bar")) {
-            $ccReadyDeliveries += "Pacote Ferreiro: Barra de Ferro x1 [Voce tem $($allItems['Iron Bar']) no bau!]"
+    
+    # 3 = Quality Crops (0: Parsnip 5 Gold, 1: Melon 5 Gold, 2: Pumpkin 5 Gold, 3: Corn 5 Gold)
+    if ($bundleStatusMap[3]) {
+        $b = $bundleStatusMap[3]
+        Write-Host "`nPacote Lavouras de Qualidade (Quality Crops):" -ForegroundColor Cyan
+        Write-Host ("  [{0}] 5 Chirivias Douradas" -f $(if ($b[0]) { "X" } else { " " })) -ForegroundColor $(if ($b[0]) { "Green" } else { "Yellow" })
+        Write-Host ("  [{0}] 5 Meloes Dourados (Verao)" -f $(if ($b[1]) { "X" } else { " " })) -ForegroundColor DarkGray
+        Write-Host ("  [{0}] 5 Aboboras Douradas (Outono)" -f $(if ($b[2]) { "X" } else { " " })) -ForegroundColor DarkGray
+        Write-Host ("  [{0}] 5 Milhos Dourados (Verao/Outono)" -f $(if ($b[3]) { "X" } else { " " })) -ForegroundColor DarkGray
+    }
+    
+    # 13 = Spring Foraging (0: Wild Horseradish, 1: Daffodil, 2: Leek, 3: Dandelion)
+    if ($bundleStatusMap[13]) {
+        $b = $bundleStatusMap[13]
+        $is13Complete = ($b[0..3] -notcontains $false)
+        Write-Host "`nPacote Coleta da Primavera (Spring Foraging):" -ForegroundColor Cyan
+        if ($is13Complete) {
+            Write-Host "  [X] PACOTE 100% COMPLETO! (Todas as 4 plantas entregues)" -ForegroundColor Green
         }
     }
-    # Bundle 21: Geólogo
-    if ($bundleStatusMap[21]) {
-        if (-not $bundleStatusMap[21][0] -and $allItems.ContainsKey("Quartz")) {
-            $ccReadyDeliveries += "Pacote Geologo: Quartzo x1 [Voce tem $($allItems['Quartz']) no bau!]"
-        }
-        if (-not $bundleStatusMap[21][1] -and $allItems.ContainsKey("Earth Crystal")) {
-            $ccReadyDeliveries += "Pacote Geologo: Cristal de Terra x1 [Voce tem $($allItems['Earth Crystal']) no bau!]"
-        }
+    
+    if (-not $boilerRoomUnlocked) {
+        Write-Host "`n[BLOQUEADO] Sala da Caldeira (Boiler Room): AINDA BLOQUEADA" -ForegroundColor DarkGray
+        Write-Host "  (Sera liberada pelos Junimos assim que voce completar a Sala de Artesanato/Crafts Room)." -ForegroundColor DarkGray
     }
 }
 
 if ($ccReadyDeliveries.Count -gt 0) {
+    Write-Host "`nITENS PRONTOS NO SEU BAU PARA ENTREGAR AGORA:" -ForegroundColor Yellow
     foreach ($del in $ccReadyDeliveries) {
-        Write-Host ("  [ENTREGAR JA] " + $del) -ForegroundColor Green
+        Write-Host ("  * " + $del) -ForegroundColor Green
     }
-} else {
-    Write-Host "  Nenhum item pendente do Centro Comunitario encontrado nos baus no momento." -ForegroundColor DarkGray
 }
 
 # 4. Viabilidade de Construções (Robin)
 Write-Host "`n----------------------------------------------------------" -ForegroundColor Gray
-Write-Host "3. VIABILIDADE DE CONSTRUÇÕES COM SEUS MATERIAIS ATUAIS" -ForegroundColor Cyan
+Write-Host "3. VIABILIDADE DE CONSTRUCOES COM SEUS MATERIAIS ATUAIS" -ForegroundColor Cyan
 
 $wood = if ($allItems.ContainsKey("Wood")) { $allItems["Wood"] } else { 0 }
 $stone = if ($allItems.ContainsKey("Stone")) { $allItems["Stone"] } else { 0 }
@@ -254,10 +251,10 @@ foreach ($b in $buildingsPlan) {
 # 5. O que guardar das colheitas
 Write-Host "`n----------------------------------------------------------" -ForegroundColor Gray
 Write-Host "4. O QUE GUARDAR DA SUA COLHEITA PARA RECEITAS E CONQUISTAS" -ForegroundColor Yellow
-Write-Host "  * Couve-flor: Guarde 1 para o CC + 1 para a Jodi + 1 para a receita Cheese Cauli."
-Write-Host "  * Morangos: Guarde 15 a 20 no baú (Presente amado Maru + Gerador de Sementes). Venda os ~150 restantes!"
-Write-Host "  * Batata: Guarde 1 para o CC + 1 para a receita Hashbrowns."
-Write-Host "  * Vagem: Guarde 1 para o CC + 1 para a receita Bean Hotpot."
-Write-Host "  * Chirívia: Guarde 1 normal + 1 para Parsnip Soup + 1 Farmer's Lunch. Venda as 60+ restantes!"
+Write-Host "  * Couve-flor: Guarde 1 para a Jodi + 1 para a receita Cheese Cauli."
+Write-Host "  * Morangos: Guarde 15 a 20 no bau (Presente amado Maru + Gerador de Sementes). Venda os ~150 restantes!"
+Write-Host "  * Batata: Guarde 1 para a receita Hashbrowns."
+Write-Host "  * Vagem (colhendo dia 25): Guarde 1 para o Centro Comunitario (completa o pacote!) + 1 para Bean Hotpot."
+Write-Host "  * Chirivia: Guarde 1 para Parsnip Soup + 1 Farmer's Lunch. Venda as 60+ restantes!"
 
 Write-Host "`n==========================================================" -ForegroundColor Green

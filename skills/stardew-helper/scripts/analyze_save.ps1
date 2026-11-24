@@ -1,4 +1,4 @@
-﻿param(
+param(
     [string]$TargetSave = "Dark",
     [switch]$Detailed
 )
@@ -33,12 +33,12 @@ Write-Host "Analisando Save: $saveFolderName..."
 $farmer = $xml.SaveGame.player
 
 # Constantes da Perfeição (Stardew Valley 1.6)
-$TOTAL_FISH = 75           # 67 peixes pescáveis + 10 do covo + novidades 1.6 (Goby, etc.)
-$TOTAL_COOKING = 80        # Total de receitas culinárias
-$TOTAL_CRAFTING = 149      # Total de receitas de fabricação
-$TOTAL_WALNUTS = 130       # Total de nozes douradas
-$TOTAL_OBELISKS = 4        # 4 obeliscos
-$TOTAL_VILLAGERS = 34      # Total de moradores com amizade
+$TOTAL_FISH = 75
+$TOTAL_COOKING = 80
+$TOTAL_CRAFTING = 149
+$TOTAL_WALNUTS = 130
+$TOTAL_OBELISKS = 4
+$TOTAL_VILLAGERS = 34
 
 $name = $farmer.name
 $farmName = $farmer.farmName
@@ -96,16 +96,13 @@ Write-Host ("- Itens Fabricados: {0}/{1} (Faltam {2})" -f $craftCount, $TOTAL_CR
 
 # Amizades
 $maxFriends = 0
-$friendList = @()
 if ($farmer.friendshipData -and $farmer.friendshipData.item) {
     foreach ($item in $farmer.friendshipData.item) {
-        $npc = $item.key.string
         $pts = [int]$item.value.Friendship.Points
         $hearts = [math]::Floor($pts / 250)
         if ($hearts -ge 8) {
             $maxFriends++
         }
-        $friendList += [PSCustomObject]@{ NPC = $npc; Hearts = $hearts; Points = $pts }
     }
 }
 Write-Host "`n[AMIZADES (8+ CORACOES)]" -ForegroundColor Cyan
@@ -139,81 +136,88 @@ Write-Host "`n[TORRE DO MAGO & RELOGIO]" -ForegroundColor Cyan
 Write-Host ("- Obeliscos Construidos: {0}/{1} (Faltam {2})" -f $obCount, $TOTAL_OBELISKS, ($TOTAL_OBELISKS - $obCount))
 Write-Host ("- Relogio de Ouro (10M): " + ($(if ($goldClock) { "Construido [OK]" } else { "Pendente (Falta 1)" })))
 
-# Centro Comunitário
-Write-Host "`n[CENTRO COMUNITARIO - PACOTES]" -ForegroundColor Cyan
-$bundleDefinitions = @{
-    0 = @{ Name = "Coleta da Primavera (Pantry/Copa)"; Items = @("Raiz-forte Silvestre", "Narciso", "Alho-poro", "Dente-de-leao") }
-    1 = @{ Name = "Coleta do Verao"; Items = @("Uva", "Fruto das Especiarias", "Ervilha-do-cepe") }
-    2 = @{ Name = "Coleta do Outono"; Items = @("Amora", "Cogumelo Comum", "Avela", "Ameixa Selvagem") }
-    3 = @{ Name = "Coleta do Inverno"; Items = @("Raiz de Inverno", "Fruta de Cristal", "Inhame de Neve", "Flor de Croco") }
-    4 = @{ Name = "Construcao (Construction)"; Items = @("Madeira (99)", "Madeira (99)", "Pedra (99)", "Madeira de Lei (10)") }
-    5 = @{ Name = "Coleta Exotica"; Items = @("Cogumelo Roxo", "Caramujo", "Cacto", "Flor de Coco", "Resina", "Xarope", "Alcatrao", "Cogumelo Vermelho") }
-    6 = @{ Name = "Lavoura da Primavera (Pantry)"; Items = @("Chirivia", "Vagem", "Couve-flor", "Batata") }
-    7 = @{ Name = "Lavoura do Verao"; Items = @("Tomate", "Pimenta", "Mirtilo", "Melao") }
-    8 = @{ Name = "Lavoura do Outono"; Items = @("Milho", "Beringela", "Abobora", "Inhame") }
-    9 = @{ Name = "Lavoura de Qualidade (Ouro)"; Items = @("Chirivia (5 Ouro)", "Melao (5 Ouro)", "Abobora (5 Ouro)", "Milho (5 Ouro)") }
-    10 = @{ Name = "Animais (Animal Bundle)"; Items = @("Leite Grande", "Ovo Marrom Grande", "Ovo Branco Grande", "Leite Grande de Cabra", "La", "Pato (Pena)") }
-    11 = @{ Name = "Artesao (Artisan Bundle)"; Items = @("Trufas", "Tecido", "Queijo de Cabra", "Queijo", "Mel", "Geleia", "Maca", "Damasco", "Laranja", "Pessego", "Roma", "Cereja") }
-    13 = @{ Name = "Peixes do Rio (Fish Tank)"; Items = @("Truta Arco-Iris", "Truta", "Bagre", "Peixe-Sol") }
-    14 = @{ Name = "Peixes do Lago"; Items = @("Perca", "Carp", "Peixe-Gato", "Truta Arco-Iris do Lago") }
-    15 = @{ Name = "Peixes do Oceano"; Items = @("Sardinha", "Atum", "Pargo Vermelho", "Tilapia") }
-    16 = @{ Name = "Peixes Noturnos"; Items = @("Picão-verde", "Enguia", "Brema") }
-    17 = @{ Name = "Peixes do Covo (Crab Pot)"; Items = @("Lagosta", "Lagostim", "Caranguejo", "Mexilhao", "Amêijoa", "Ostra", "Caracol", "Búzio", "Mexilhão-castanho", "Camarão") }
-    19 = @{ Name = "Peixes Especiais"; Items = @("Pufferfish", "Peixe-Fantasma", "Peixe-Areia", "Madeira-Flutuante") }
-    20 = @{ Name = "Ferreiro (Boiler Room)"; Items = @("Barra de Cobre", "Barra de Ferro", "Barra de Ouro") }
-    21 = @{ Name = "Geologo"; Items = @("Quartzo", "Cristal de Terra", "Lagrima Congelada", "Geodo de Fogo") }
-    22 = @{ Name = "Aventureiro"; Items = @("Gosma (99)", "Asa de Morcego (10)", "Carvão Solar", "Carvão Noturno") }
-    23 = @{ Name = "Cofre: 2.500g"; Items = @("2.500g") }
-    24 = @{ Name = "Cofre: 5.000g"; Items = @("5.000g") }
-    25 = @{ Name = "Cofre: 10.000g"; Items = @("10.000g") }
-    26 = @{ Name = "Cofre: 25.000g"; Items = @("25.000g") }
-    31 = @{ Name = "Cozinheiro (Bulletin Board)"; Items = @("Xarope de Acer", "Samambaia", "Trufa", "Papoila", "Maki Roll", "Ovo Frito") }
-    32 = @{ Name = "Corante (Dye Bundle)"; Items = @("Cogumelo Vermelho", "Ourico-do-mar", "Girassol", "Pena de Pato", "Agua-marinha", "Repolho Roxo") }
-    33 = @{ Name = "Campo (Field Research)"; Items = @("Flor de Dente", "Concha Nautilo", "Chub", "Geodo Congelado") }
-    34 = @{ Name = "Feiticeiro (Fodder)"; Items = @("Trigo (10)", "Feno (10)", "Maca (3)") }
-    35 = @{ Name = "Encantador (Enchanter)"; Items = @("Carvalho", "Vinho", "Romã", "Pé de Coelho") }
+# Dicionário oficial de nomes dos itens de Stardew Valley
+$itemNameMap = @{
+    "16" = "Raiz-forte Silvestre"; "18" = "Narciso"; "20" = "Alho-poro"; "22" = "Dente-de-leao"
+    "24" = "Chirivia"; "188" = "Vagem"; "190" = "Couve-flor"; "192" = "Batata"
+    "254" = "Melao"; "256" = "Tomate"; "258" = "Mirtilo"; "260" = "Pimenta"
+    "270" = "Milho"; "272" = "Beringela"; "276" = "Abobora"; "280" = "Inhame"
+    "186" = "Leite Grande"; "182" = "Ovo Marrom Grande"; "174" = "Ovo Branco Grande"; "438" = "Leite Grande de Cabra"; "440" = "La"; "442" = "Pena de Pato"
+    "432" = "Trufa"; "428" = "Tecido"; "426" = "Queijo de Cabra"; "424" = "Queijo"; "340" = "Mel"; "344" = "Geleia"
+    "388" = "Madeira (99)"; "390" = "Pedra (99)"; "709" = "Madeira de Lei (10)"
+    "145" = "Peixe-Sol"; "143" = "Bagre"; "706" = "Savelha"; "699" = "Truta Tigre"
+    "136" = "Largemouth Bass"; "142" = "Carp"; "700" = "Bullhead"; "698" = "Sturgeon"
+    "131" = "Sardinha"; "130" = "Atum"; "150" = "Pargo Vermelho"; "701" = "Tilapia"
+    "140" = "Walleye"; "132" = "Brema"; "148" = "Enguia"
+    "334" = "Barra de Cobre"; "335" = "Barra de Ferro"; "336" = "Barra de Ouro"
+    "80" = "Quartzo"; "86" = "Cristal de Terra"; "84" = "Lagrima Congelada"; "82" = "Geodo de Fogo"
+    "766" = "Gosma (99)"; "767" = "Asa de Morcego (10)"; "768" = "Carvao Solar"; "769" = "Carvao Noturno"
 }
 
+# Parser inteligente do bundleData do próprio save
+$bundleMeta = @{}
+if ($xml.SaveGame.bundleData -and $xml.SaveGame.bundleData.item) {
+    foreach ($entry in $xml.SaveGame.bundleData.item) {
+        $parts = $entry.key.string -split '/'
+        $room = $parts[0]
+        $bId = [int]$parts[1]
+        
+        $fields = $entry.value.string -split '/'
+        $bName = $fields[0]
+        $rawItems = $fields[2] -split ' '
+        
+        $reqItems = @()
+        for ($i = 0; $i -lt $rawItems.Count; $i += 3) {
+            $itemId = $rawItems[$i]
+            $itemCount = $rawItems[$i+1]
+            $itemQual = $rawItems[$i+2]
+            
+            $iName = if ($itemNameMap.ContainsKey($itemId)) { $itemNameMap[$itemId] } else { "Item #$itemId" }
+            if ($itemQual -eq "2") { $iName += " (Ouro)" }
+            if ([int]$itemCount -gt 1 -and $iName -notmatch '\(') { $iName += " ($itemCount)" }
+            $reqItems += $iName
+        }
+        
+        $bundleMeta[$bId] = @{
+            Room = $room
+            Name = $bName
+            Items = $reqItems
+        }
+    }
+}
+
+# Centro Comunitário
+Write-Host "`n[CENTRO COMUNITARIO - PACOTES]" -ForegroundColor Cyan
 $loc = $xml.SaveGame.locations.GameLocation | Where-Object { $_.Name -eq 'CommunityCenter' }
 if ($loc -and $loc.bundles -and $loc.bundles.item) {
-    $completedBundles = 0
-    $pendingBundles = 0
-    $bundleItemsDetails = @()
-
     foreach ($b in $loc.bundles.item) {
         $bId = [int]$b.key.int
         $bools = @($b.value.ArrayOfBoolean.boolean) | ForEach-Object { [bool]::Parse($_) }
-        $totalSlots = $bools.Count
-        $filledSlots = ($bools | Where-Object { $_ -eq $true }).Count
         
-        $info = $bundleDefinitions[$bId]
-        $bName = if ($info) { $info.Name } else { "Conjunto ID $bId" }
+        $info = $bundleMeta[$bId]
+        if (-not $info) { continue }
         
-        # Um bundle pode ser completado mesmo com slots livres (ex: Coleta Exotica precisa de 5 entre 8)
-        $isComplete = ($filledSlots -ge 1 -and -not ($bools -contains $false)) -or ($bId -eq 0 -and $filledSlots -ge 4) -or ($bId -eq 13 -and $filledSlots -ge 4)
+        $reqCount = $info.Items.Count
+        if ($reqCount -eq 0) { continue }
         
-        if ($filledSlots -gt 0) {
-            $bundleItemsDetails += [PSCustomObject]@{
-                Id = $bId
-                Name = $bName
-                Filled = $filledSlots
-                Slots = $totalSlots
-                Status = if ($filledSlots -eq $totalSlots -or $isComplete) { "COMPLETO" } else { "EM PROGRESSO ($filledSlots entregues)" }
-                Bools = $bools
+        # Verificar quantos dos itens requeridos estão true
+        $filledCount = 0
+        for ($idx = 0; $idx -lt $reqCount; $idx++) {
+            if ($idx -lt $bools.Count -and $bools[$idx] -eq $true) {
+                $filledCount++
             }
         }
-    }
-
-    Write-Host "Conjuntos com progresso iniciado:"
-    foreach ($det in $bundleItemsDetails) {
-        $color = if ($det.Status -like "*COMPLETO*") { "Green" } else { "Yellow" }
-        Write-Host ("  * [{0}] {1}: {2}" -f $det.Id, $det.Name, $det.Status) -ForegroundColor $color
         
-        $info = $bundleDefinitions[$det.Id]
-        if ($info -and $det.Status -notlike "*COMPLETO*") {
-            for ($idx = 0; $idx -lt $det.Bools.Count; $idx++) {
-                $itName = if ($idx -lt $info.Items.Count) { $info.Items[$idx] } else { "Item #$($idx+1)" }
-                $done = $det.Bools[$idx]
+        # Pacote completo se todos forem true (ou caso de 12 trues como no Spring Foraging)
+        $isComplete = ($filledCount -ge $reqCount) -or ($bools[0..3] -notcontains $false)
+        
+        if ($isComplete) {
+            Write-Host ("  * [{0}] {1} ({2}): COMPLETO! [OK]" -f $bId, $info.Name, $info.Room) -ForegroundColor Green
+        } elseif ($filledCount -gt 0) {
+            Write-Host ("  * [{0}] {1} ({2}): EM PROGRESSO ({3}/{4} entregues)" -f $bId, $info.Name, $info.Room, $filledCount, $reqCount) -ForegroundColor Yellow
+            for ($idx = 0; $idx -lt $reqCount; $idx++) {
+                $itName = $info.Items[$idx]
+                $done = ($idx -lt $bools.Count -and $bools[$idx] -eq $true)
                 if ($done) {
                     Write-Host ("      [X] Entregue: $itName") -ForegroundColor DarkGreen
                 } else {
