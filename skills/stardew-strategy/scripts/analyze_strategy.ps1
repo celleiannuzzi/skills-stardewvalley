@@ -252,7 +252,7 @@ foreach ($b in $buildingsPlan) {
 Write-Host "`n----------------------------------------------------------" -ForegroundColor Gray
 Write-Host "4. O QUE GUARDAR DA SUA COLHEITA PARA RECEITAS E CONQUISTAS" -ForegroundColor Yellow
 Write-Host "  * Couve-flor: Guarde 1 para a Jodi + 1 para a receita Cheese Cauli."
-Write-Host "  * Morangos: Guarde 15 a 20 no bau (Presente amado Maru + Gerador de Sementes). Venda os ~150 restantes!"
+Write-Host "  * Morangos (Colhendo no Dia 25): Guarde 15 a 20 no bau (Presente amado Maru + Gerador de Sementes). Venda os ~150 restantes!"
 Write-Host "  * Batata: Guarde 1 para a receita Hashbrowns."
 Write-Host "  * Vagem (colhendo dia 25): Guarde 1 para o Centro Comunitario (completa o pacote!) + 1 para Bean Hotpot."
 Write-Host "  * Chirivia: Guarde 1 para Parsnip Soup + 1 Farmer's Lunch. Venda as 60+ restantes!"
