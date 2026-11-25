@@ -188,8 +188,8 @@ if ($growthGroups.Count -gt 0) {
 Write-Host "----------------------------------------------------------" -ForegroundColor Gray
 Write-Host "3. O QUE AINDA DA TEMPO DE PLANTAR HOJE?" -ForegroundColor Cyan
 Write-Host "Dias restantes antes da virada do mes (Verao): $daysRemainingInSeason dias"
-Write-Host "  * Chirivia (Parsnip) : 4 dias -> Colheita no Dia 27 (Lucro: +15g/un)" -ForegroundColor Green
-Write-Host "  * Cenoura (Carrot)   : 3 dias -> Colheita no Dia 26 (Lucro: 100% puro)" -ForegroundColor Green
+Write-Host "  * Chirivia (Parsnip) : 4 dias -> Colheita no Dia \$targetDay (Lucro: +15g/un)" -ForegroundColor Green
+Write-Host "  * Cenoura (Carrot)   : 3 dias -> Colheita no Dia \$targetDay (Lucro: 100% puro)" -ForegroundColor Green
 Write-Host "  * Outras sementes    : Nao plante sem fertilizante acelerador!" -ForegroundColor DarkGray
 
 Write-Host "`n==========================================================" -ForegroundColor Green
