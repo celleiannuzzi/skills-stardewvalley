@@ -1,4 +1,4 @@
-Ôªøparam(
+param(
     [string]$TargetSave = "Dark"
 )
 
@@ -37,7 +37,7 @@ $daysRemainingInSeason = 28 - $currentDay
 Write-Host "Fazendeiro(a): $($farmer.name) | Fazenda: $($farmer.farmName) Farm" -ForegroundColor Cyan
 Write-Host "Data Atual: Dia $currentDay de $season (Ano $year) | Dias restantes: $daysRemainingInSeason dias" -ForegroundColor Cyan
 
-# 1. Contabilizar M√°quinas no Save (Colocadas no mapa, no invent√°rio ou em ba√∫s)
+# 1. Contabilizar M·quinas no Save (Colocadas no mapa, no invent·rio ou em ba˙s)
 $machineCounts = @{
     "Keg" = 0
     "Preserves Jar" = 0
@@ -97,7 +97,7 @@ if ($farm -and $farm.terrainFeatures -and $farm.terrainFeatures.item) {
 }
 
 Write-Host "`n----------------------------------------------------------" -ForegroundColor Gray
-Write-Host "2. STATUS DAS PLANTAS & PROJE√á√ÉO DE VALOR" -ForegroundColor Cyan
+Write-Host "2. STATUS DAS PLANTAS & PROJE«√O DE VALOR" -ForegroundColor Cyan
 
 $readyGroups = @()
 $growthGroups = @()
